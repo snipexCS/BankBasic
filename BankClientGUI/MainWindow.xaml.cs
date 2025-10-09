@@ -24,10 +24,7 @@ namespace BankClientGUI
             await GetByIndexAsync();
         }
 
-        private async void SearchButton_Click(object sender, RoutedEventArgs e)
-        {
-            await SearchAsync();
-        }
+        
 
        
 
@@ -67,36 +64,8 @@ namespace BankClientGUI
             }
         }
 
-        private async Task SearchAsync()
-        {
-            try
-            {
-                var s = new SearchData { searchStr = SearchBox.Text ?? string.Empty };
-                var request = new RestRequest("search", Method.Post);
-                request.AddJsonBody(s);
+     
 
-                var response = await _client.ExecuteAsync(request);
-
-                if (!response.IsSuccessful)
-                {
-                    await HandleApiError(response.Content);
-                    return;
-                }
-
-                var data = await Task.Run(() => JsonConvert.DeserializeObject<DataIntermedDTO>(response.Content!));
-                if (data == null)
-                {
-                    MessageBox.Show("Failed to parse server response.");
-                    return;
-                }
-
-                DisplayData(data);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error: " + ex.Message);
-            }
-        }
 
         private async Task HandleApiError(string? content)
         {

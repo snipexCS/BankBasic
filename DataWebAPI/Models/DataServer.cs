@@ -20,7 +20,7 @@ namespace DataWebAPI.Models
 
         private DataServer()
         {
-            Data = SeedData(100_000); // 100,000 users
+            Data = SeedData(100_000); 
         }
 
         private List<DataIntermed> SeedData(int count)
@@ -39,12 +39,12 @@ namespace DataWebAPI.Models
             {
                 list.Add(new DataIntermed
                 {
-                    acct = (uint)(1000 + i), // unique account numbers
-                    pin = (uint)(1000 + RandomGen.Next(9000)), // random 4-digit-ish PIN
+                    acct = (uint)(1000 + i), 
+                    pin = (uint)(1000 + RandomGen.Next(9000)), 
                     fname = FirstNames[RandomGen.Next(FirstNames.Length)],
                     lname = LastNames[RandomGen.Next(LastNames.Length)],
                     bal = Balances[RandomGen.Next(Balances.Length)],
-                    image = images[i % 6] // always safe non-null array
+                    image = images[i % 6] 
                 });
             }
 

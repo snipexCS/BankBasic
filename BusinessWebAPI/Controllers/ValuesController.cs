@@ -61,37 +61,7 @@ namespace BusinessWebAPI.Controllers
             }
         }
 
-        [HttpPost("search")]
-        public async Task<ActionResult<DataIntermedDTO>> SearchAsync([FromBody] SearchData search)
-        {
-            try
-            {
-                var client = new RestClient($"{_dataBaseUrl}/search");
-                var request = new RestRequest();
-                request.AddJsonBody(search);
-                var response = await client.ExecuteAsync(request);
-                if (!response.IsSuccessful)
-                    return StatusCode((int)response.StatusCode, response.Content);
+        
 
-                var data = JsonConvert.DeserializeObject<DataIntermed>(response.Content!);
-                if (data == null) return Problem("Failed to parse DataWebAPI response");
-
-                var dto = new DataIntermedDTO
-                {
-                    acct = data.acct,
-                    bal = data.bal,
-                    pin = data.pin,
-                    fname = data.fname,
-                    lname = data.lname,
-                    imageBase64 = data.image != null ? Convert.ToBase64String(data.image) : null
-                };
-
-                return Ok(dto);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, JsonConvert.SerializeObject(new ApiError { Message = ex.Message, StackTrace = ex.StackTrace }));
-            }
-        }
     }
 }

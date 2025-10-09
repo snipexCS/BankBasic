@@ -22,7 +22,7 @@
 
     public class SearchData
     {
-        public string searchStr { get; set; } = "";
+        public uint acct { get; set; }
     }
 
     public class ApiError

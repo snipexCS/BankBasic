@@ -21,19 +21,7 @@ namespace DataWebAPI.Controllers
             return Ok(_data[index]);
         }
 
-        [HttpPost("search")]
-        public ActionResult<DataIntermed> Search([FromBody] SearchData query)
-        {
-            if (query == null || string.IsNullOrWhiteSpace(query.searchStr))
-                return BadRequest("searchStr required in body");
 
-            var r = _data.Find(d =>
-                d.fname.Contains(query.searchStr, System.StringComparison.OrdinalIgnoreCase) ||
-                d.lname.Contains(query.searchStr, System.StringComparison.OrdinalIgnoreCase)
-            );
 
-            if (r == null) return NotFound("No matching record found");
-            return Ok(r);
-        }
     }
 }

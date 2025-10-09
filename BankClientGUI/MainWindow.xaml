@@ -14,10 +14,6 @@
             <TextBlock Text="Index:" VerticalAlignment="Center" Margin="0,0,5,0"/>
             <TextBox x:Name="IndexNum" Width="60" Text="1"/>
             <Button x:Name="GoButton" Content="Get By Index" Click="GoButton_Click" Margin="8,0,15,0"/>
-
-            <TextBlock Text="Search:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-            <TextBox x:Name="SearchBox" Width="150"/>
-            <Button x:Name="SearchButton" Content="Search" Click="SearchButton_Click" Margin="8,0,0,0"/>
         </StackPanel>
 
         <Separator Grid.Row="1"/>
