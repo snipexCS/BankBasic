@@ -26,6 +26,21 @@ namespace DataWebAPI.Controllers
         {
             return Ok(_data);
         }
+        [HttpGet("search")]
+        public ActionResult<List<DataIntermed>> Search(
+    [FromQuery] string fname = "",
+    [FromQuery] string lname = "",
+    [FromQuery] uint? acct = null)
+        {
+            var results = _data.Where(d =>
+                (string.IsNullOrEmpty(fname) || d.fname.Equals(fname, StringComparison.OrdinalIgnoreCase)) &&
+                (string.IsNullOrEmpty(lname) || d.lname.Equals(lname, StringComparison.OrdinalIgnoreCase)) &&
+                (!acct.HasValue || d.acct == acct.Value)
+            ).ToList();
+
+            return Ok(results);
+        }
+
 
 
 

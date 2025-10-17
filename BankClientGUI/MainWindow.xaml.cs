@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq; // ✅ Needed for Select() and ToList()
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media.Imaging;
 using API_Classes;
 using Newtonsoft.Json;
 using RestSharp;
@@ -21,7 +22,6 @@ namespace BankClientGUI
             _client = new RestClient(_businessBase);
         }
 
-        
         private async void GoButton_Click(object sender, RoutedEventArgs e)
         {
             await GetByIndexAsync();
@@ -53,7 +53,7 @@ namespace BankClientGUI
                     return;
                 }
 
-                DisplayData(data);
+                await DisplayDataAsync(data);
             }
             catch (Exception ex)
             {
@@ -61,33 +61,7 @@ namespace BankClientGUI
             }
         }
 
-     
-        private async Task HandleApiError(string? content)
-        {
-            try
-            {
-                var error = JsonConvert.DeserializeObject<ApiError>(content!);
-                if (error != null)
-                {
-
-                    MessageBox.Show($"API Error: {error.Message}\n\nStack Trace:\n{error.StackTrace}");
-
-                   
-
-                }
-                else
-                {
-                    MessageBox.Show("Unknown server error.");
-                }
-            }
-            catch
-            {
-                MessageBox.Show("Failed to read server error response.");
-            }
-        }
-
-     
-        private async void DisplayData(DataIntermedDTO d)
+        private async Task DisplayDataAsync(DataIntermedDTO d)
         {
             FNameBox.Text = d.fname;
             LNameBox.Text = d.lname;
@@ -99,21 +73,8 @@ namespace BankClientGUI
             {
                 try
                 {
-                    byte[] bytes = await Task.Run(() => Convert.FromBase64String(d.imageBase64));
-
-                    await Task.Run(() =>
-                    {
-                        Application.Current.Dispatcher.Invoke(() =>
-                        {
-                            using var ms = new MemoryStream(bytes);
-                            var bitmap = new System.Windows.Media.Imaging.BitmapImage();
-                            bitmap.BeginInit();
-                            bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-                            bitmap.StreamSource = ms;
-                            bitmap.EndInit();
-                            ProfileImage.Source = bitmap;
-                        });
-                    });
+                    var bitmap = await Task.Run(() => LoadImageFromBase64(d.imageBase64));
+                    ProfileImage.Source = bitmap;
                 }
                 catch (Exception ex)
                 {
@@ -126,17 +87,47 @@ namespace BankClientGUI
             }
         }
 
+        private BitmapImage LoadImageFromBase64(string base64)
+        {
+            byte[] bytes = Convert.FromBase64String(base64);
+            using var ms = new MemoryStream(bytes);
+            var bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.StreamSource = ms;
+            bitmap.EndInit();
+            bitmap.Freeze();
+            return bitmap;
+        }
+
+        private async Task HandleApiError(string? content)
+        {
+            try
+            {
+                var error = JsonConvert.DeserializeObject<ApiError>(content!);
+                if (error != null)
+                {
+                    MessageBox.Show($"API Error: {error.Message}\n\nStack Trace:\n{error.StackTrace}");
+                }
+                else
+                {
+                    MessageBox.Show("Unknown server error.");
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Failed to read server error response.");
+            }
+        }
 
         private async void GetCountButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                
                 GetCountButton.IsEnabled = false;
                 TotalCountText.Text = "Loading total accounts...";
                 AccountsListView.ItemsSource = null;
 
-              
                 int total = await Task.Run(async () =>
                 {
                     var countRequest = new RestRequest("", Method.Get);
@@ -147,24 +138,22 @@ namespace BankClientGUI
                     return JsonConvert.DeserializeObject<int>(countResponse.Content!);
                 });
 
-              
                 TotalCountText.Text = $"Total Accounts: {total}";
 
-                
-                var allAccounts = await Task.Run(async () => await GetAllAccountsAsync());
+                var allAccounts = await GetAllAccountsAsync();
 
-                
                 var displayList = await Task.Run(() =>
                     allAccounts.Select(a => new
                     {
                         FName = a.fname,
                         LName = a.lname,
                         AcctNo = a.acct,
-                        Balance = a.bal.ToString("C")
+                        Balance = a.bal.ToString("C"),
+                        Pin = a.pin.ToString("D4"),
+                        ProfileImage = !string.IsNullOrEmpty(a.imageBase64) ? LoadImageFromBase64(a.imageBase64) : null
                     }).ToList()
                 );
 
-               
                 AccountsListView.ItemsSource = displayList;
             }
             catch (Exception ex)
@@ -173,11 +162,9 @@ namespace BankClientGUI
             }
             finally
             {
-                
                 GetCountButton.IsEnabled = true;
             }
         }
-
 
         private async Task<List<DataIntermedDTO>> GetAllAccountsAsync()
         {
@@ -195,6 +182,42 @@ namespace BankClientGUI
             );
 
             return list ?? new List<DataIntermedDTO>();
+        }
+
+        private async void SearchButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string fname = FNameSearch.Text.Trim().ToLower();
+                string lname = LNameSearch.Text.Trim().ToLower();
+                string acctText = AcctSearch.Text.Trim();
+
+                var allAccounts = await GetAllAccountsAsync();
+
+                var results = allAccounts.Where(a =>
+                    (string.IsNullOrEmpty(fname) || a.fname.ToLower().Contains(fname)) &&
+                    (string.IsNullOrEmpty(lname) || a.lname.ToLower().Contains(lname)) &&
+                    (string.IsNullOrEmpty(acctText) || a.acct.ToString().Contains(acctText))
+                ).ToList();
+
+                var displayList = await Task.Run(() =>
+                    results.Select(a => new
+                    {
+                        FName = a.fname,
+                        LName = a.lname,
+                        AcctNo = a.acct,
+                        Balance = a.bal.ToString("C"),
+                        Pin = a.pin.ToString("D4"),
+                        ProfileImage = !string.IsNullOrEmpty(a.imageBase64) ? LoadImageFromBase64(a.imageBase64) : null
+                    }).ToList()
+                );
+
+                AccountsListView.ItemsSource = displayList;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error searching accounts: {ex.Message}");
+            }
         }
     }
 }
