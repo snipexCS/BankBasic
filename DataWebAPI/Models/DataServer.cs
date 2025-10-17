@@ -20,12 +20,12 @@ namespace DataWebAPI.Models
 
         private DataServer()
         {
-            Data = SeedData(100_000); 
+            Data = SeedData(1000); 
         }
 
         private List<DataIntermed> SeedData(int count)
         {
-            // Load images safely
+      
             var images = new byte[6][];
             for (int i = 0; i < 6; i++)
             {

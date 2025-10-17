@@ -20,10 +20,7 @@
         public string imageBase64 { get; set; }
     }
 
-    public class SearchData
-    {
-        public uint acct { get; set; }
-    }
+  
 
     public class ApiError
     {

@@ -60,8 +60,45 @@ namespace BusinessWebAPI.Controllers
                 return StatusCode(500, JsonConvert.SerializeObject(new ApiError { Message = ex.Message, StackTrace = ex.StackTrace }));
             }
         }
+        [HttpGet("all")]
+        public async Task<ActionResult<List<DataIntermedDTO>>> GetAllAccountsAsync()
+        {
+            try
+            {
+                var client = new RestClient($"{_dataBaseUrl}/all");
+                var response = await client.ExecuteAsync(new RestRequest());
 
-        
+                if (!response.IsSuccessful)
+                    return StatusCode((int)response.StatusCode, response.Content);
+
+                var allData = JsonConvert.DeserializeObject<List<DataIntermed>>(response.Content!);
+                if (allData == null)
+                    return Problem("Failed to parse DataWebAPI response");
+
+                var dtoList = allData.Select(d => new DataIntermedDTO
+                {
+                    acct = d.acct,
+                    bal = d.bal,
+                    pin = d.pin,
+                    fname = d.fname,
+                    lname = d.lname,
+                    imageBase64 = d.image != null ? Convert.ToBase64String(d.image) : null
+                }).ToList();
+
+                return Ok(dtoList);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, JsonConvert.SerializeObject(new ApiError
+                {
+                    Message = ex.Message,
+                    StackTrace = ex.StackTrace
+                }));
+            }
+        }
+
+
+
 
     }
 }

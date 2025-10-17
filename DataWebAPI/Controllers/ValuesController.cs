@@ -21,6 +21,13 @@ namespace DataWebAPI.Controllers
             return Ok(_data[index]);
         }
 
+        [HttpGet("all")]
+        public ActionResult<List<DataIntermed>> GetAllAccounts()
+        {
+            return Ok(_data);
+        }
+
+
 
 
     }
